@@ -12,9 +12,14 @@ import Json.Decode as Json
 -- MAIN
 
 
-main : Program () Model Msg
+main : Program (Maybe Model) Model Msg
 main =
-    Browser.sandbox { init = init, update = update, view = view }
+    Browser.element
+      { init = init
+      , update = update
+      , subscriptions = subscriptions
+      , view = view
+      }
 
 
 
@@ -53,9 +58,11 @@ newEntry desc id =
     }
 
 
-init : Model
-init =
-    emptyModel
+init : Maybe Model -> ( Model, Cmd Msg )
+init maybeModel =
+    ( Maybe.withDefault emptyModel maybeModel
+    , Cmd.none
+    )
 
 
 
@@ -69,28 +76,34 @@ type Msg
     | Check Int Bool
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
         UpdateField str ->
-            { model | field = str }
+            ( { model | field = str }
+            , Cmd.none
+            )
 
         Add ->
-            { model
-                | uid = model.uid + 1
-                , field = ""
-                , entries =
-                    if String.isEmpty model.field then
-                        model.entries
+          ({ model
+          | uid = model.uid + 1
+          , field = ""
+          , entries =
+            if String.isEmpty model.field then
+              model.entries
 
-                    else
-                        model.entries ++ [ newEntry model.field model.uid ]
-            }
+            else
+              model.entries ++ [ newEntry model.field model.uid ]
+          }
+          , Cmd.none
+          )
 
         Delete id ->
-            { model
-                | entries = List.filter (\t -> t.id /= id) model.entries
-            }
+          ( { model
+          | entries = List.filter (\t -> t.id /= id) model.entries
+          } 
+          , Cmd.none
+          )
 
         Check id isCompleted ->
             let
@@ -101,8 +114,17 @@ update msg model =
                     else
                         t
             in
-            { model | entries = List.map updateEntry model.entries }
+            ( { model | entries = List.map updateEntry model.entries }
+            , Cmd.none
+            )
 
+
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+  Sub.none
 
 
 -- VIEW
