@@ -25,6 +25,6 @@ there is a [justfile](https://github.com/casey/just)[^1]
 ## Todo
 
 - [ ] Filter list items on Complete, Active, All (Use enum)
-- [ ] Localstorage
 - [ ] LIST OF LISTS
 - [ ] tags?
+- [x] Localstorage

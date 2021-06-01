@@ -1,4 +1,4 @@
-module Main exposing (..)
+port module Main exposing (..)
 
 import Browser
 import Html exposing (..)
@@ -6,6 +6,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Html.Keyed as Keyed
 import Json.Decode as Json
+import Html.Lazy exposing (lazy, lazy2)
 
 
 
@@ -16,12 +17,27 @@ main : Program (Maybe Model) Model Msg
 main =
     Browser.element
       { init = init
-      , update = update
+      , update = updateWithStorage
       , subscriptions = subscriptions
       , view = view
       }
 
 
+port setStorage : Model -> Cmd msg
+
+
+{-| We want to `setStorage` on every update. This function adds the setStorage
+command for every step of the update function.
+-}
+updateWithStorage : Msg -> Model -> ( Model, Cmd Msg )
+updateWithStorage msg model =
+    let
+        ( newModel, cmds ) =
+            update msg model
+    in
+        ( newModel
+        , Cmd.batch [ setStorage newModel, cmds ]
+        )
 
 -- MODEL
 
@@ -135,17 +151,9 @@ view model =
     div [ class "app" ]
         [ header []
             [ h1 [] [ text "Listy list" ]
-            , input
-                [ placeholder "add an item"
-                , class "todo"
-                , value model.field
-                , autofocus True
-                , onInput UpdateField
-                , onEnter Add
-                ]
-                []
+            , lazy viewInput model.field
             ]
-        , viewEntries model.entries
+        , lazy viewEntries model.entries
         ]
 
 
@@ -163,6 +171,19 @@ onEnter msg =
                 Json.fail "not ENTER"
     in
     on "keydown" (Json.andThen isEnter keyCode)
+
+
+viewInput : String -> Html Msg 
+viewInput field =
+    input
+        [ placeholder "add an item"
+        , class "todo"
+        , value field
+        , autofocus True
+        , onInput UpdateField
+        , onEnter Add
+        ]
+        []
 
 
 viewKeyedEntry : Entry -> ( String, Html Msg )
