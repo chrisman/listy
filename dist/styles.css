@@ -1,4 +1,5 @@
 body {
+  box-sizing: border-box;
   background-color: pink;
   display: flex;
   justify-content: center;
@@ -16,10 +17,9 @@ header {
   padding: 16px 16px 16px 60px;
   border: 0;
   border-radius: 5px;
-  margin-bottom: 2rem;
 }
 
-.deleteTodo {
+button {
   background: none;
   border: none;
   cursor: pointer;
@@ -37,4 +37,20 @@ li {
 
 li > label {
   flex: 1;
+}
+
+.controls {
+  margin: 1rem 0;
+}
+.controls > * {
+  display: flex;
+  justify-content: space-between;
+}
+
+a {
+  color: blue;
+  text-decoration: none;
+}
+a.selected {
+  text-decoration: underline;
 }
