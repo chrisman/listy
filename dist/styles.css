@@ -5,8 +5,8 @@ body {
   justify-content: center;
 }
 
-.app {
-  max-width: 60ch;
+.hidden {
+  display: none;
 }
 
 header {
@@ -35,7 +35,7 @@ li {
   display: flex;
 }
 
-li > label {
+.grow {
   flex: 1;
 }
 
@@ -53,4 +53,9 @@ a {
 }
 a.selected {
   text-decoration: underline;
+}
+
+.complete {
+ color: gray;
+ text-decoration: line-through;
 }

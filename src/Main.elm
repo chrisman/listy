@@ -1,12 +1,14 @@
 port module Main exposing (..)
 
 import Browser
+import Browser.Dom as Dom
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Html.Keyed as Keyed
 import Html.Lazy exposing (lazy, lazy2)
 import Json.Decode as Json
+import Task
 
 
 
@@ -55,6 +57,7 @@ type alias Model =
 type alias Entry =
     { description : String
     , completed : Bool
+    , editing : Bool
     , id : Int
     }
 
@@ -64,7 +67,7 @@ emptyModel =
     { entries = []
     , field = ""
     , uid = 0
-    , visibility = "Active"
+    , visibility = "All"
     }
 
 
@@ -72,6 +75,7 @@ newEntry : String -> Int -> Entry
 newEntry desc id =
     { description = desc
     , completed = False
+    , editing = False
     , id = id
     }
 
@@ -94,6 +98,9 @@ type Msg
     | Check Int Bool
     | ChangeVisibility String
     | DeleteComplete
+    | EditingEntry Int Bool
+    | NoOp
+    | UpdateEntry Int String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -148,6 +155,38 @@ update msg model =
             , Cmd.none
             )
 
+        EditingEntry id isEditing ->
+            let
+                updateEntry t =
+                    if t.id == id then
+                        { t | editing = isEditing }
+
+                    else
+                        t
+
+                focus =
+                    Dom.focus ("todo-" ++ String.fromInt id)
+            in
+            ( { model | entries = List.map updateEntry model.entries }
+            , Task.attempt (\_ -> NoOp) focus
+            )
+
+        NoOp ->
+            ( model, Cmd.none )
+
+        UpdateEntry id desc ->
+            let
+                updateEntry t =
+                    if t.id == id then
+                        { t | description = desc }
+
+                    else
+                        t
+            in
+            ( { model | entries = List.map updateEntry model.entries }
+            , Cmd.none
+            )
+
 
 
 -- SUBSCRIPTIONS
@@ -174,11 +213,9 @@ view model =
         ]
 
 
-
--- Custom Event Listener
--- https://package.elm-lang.org/packages/elm/html/latest/Html-Events#on
-
-
+{-| Custom Event Listener
+<https://package.elm-lang.org/packages/elm/html/latest/Html-Events#on>
+-}
 onEnter : Msg -> Attribute Msg
 onEnter msg =
     let
@@ -220,8 +257,25 @@ viewEntry todo =
             , id (String.fromInt todo.id)
             ]
             []
-        , label [ for (String.fromInt todo.id) ] [ text todo.description ]
-        , button [ class "deleteTodo", onClick (Delete todo.id) ] [ text "🚫" ]
+        , label
+            [ classList [ ( "hidden", todo.editing ), ( "complete", todo.completed ) ]
+            , class "grow"
+            , for (String.fromInt todo.id)
+            ]
+            [ text todo.description ]
+        , input
+            [ class "edit"
+            , class "grow"
+            , value todo.description
+            , classList [ ( "hidden", not todo.editing ) ]
+            , id ("todo-" ++ String.fromInt todo.id)
+            , onInput (UpdateEntry todo.id)
+            , onBlur (EditingEntry todo.id False)
+            , onEnter (EditingEntry todo.id False)
+            ]
+            []
+        , button [ onClick (EditingEntry todo.id True) ] [ text "✏️" ]
+        , button [ onClick (Delete todo.id) ] [ text "🚫" ]
         ]
 
 
@@ -284,9 +338,9 @@ viewControlsFilters : String -> Html Msg
 viewControlsFilters visibility =
     ul
         [ class "filters" ]
-        [ visibilitySwap "#/active" "Active" visibility
+        [ visibilitySwap "#/" "All" visibility
+        , visibilitySwap "#/active" "Active" visibility
         , visibilitySwap "#/completed" "Completed" visibility
-        , visibilitySwap "#/" "All" visibility
         ]
 
 

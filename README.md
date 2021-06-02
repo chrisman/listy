@@ -24,8 +24,8 @@ there is a [justfile](https://github.com/casey/just)[^1]
 
 ## Todo
 
-- [ ] edit list items
 - [ ] LIST OF LISTS
 - [ ] tags?
 - [x] Filter list items on Complete, Active, All (Use enum)
 - [x] Localstorage
+- [x] edit list items
